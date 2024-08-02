@@ -1,0 +1,28 @@
+{
+  "elements": [
+    {
+      "x": 150,
+      "y": 150,
+      "width": 50,
+      "height": 50,
+      "color": "#ffff00"
+    },
+    {
+      "x": 250,
+      "y": 250,
+      "width": 100,
+      "height": 50,
+      "color": "#ff00ff"
+    },
+    {
+      "x": 350,
+      "y": 350,
+      "width": 50,
+      "height": 50,
+      "color": "#00ffff",
+      "type": "teleporter",
+      "targetScene": "scene1.json"
+    }
+  ]
+}
+
