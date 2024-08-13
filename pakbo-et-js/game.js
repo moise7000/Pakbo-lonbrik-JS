@@ -31,6 +31,14 @@ teleporterImage.src = 'assets/teleporter.png';
 
 let backgroundImage = new Image();
 
+const playButtonSilverImage = new Image();
+playButtonSilverImage.src = 'assets/play_silver.png';
+
+const playButtonGoldImage = new Image();
+playButtonGoldImage.src = 'assets/play_gold.png';
+
+let currentButtonImage = playButtonSilverImage;
+
 async function loadScene(sceneFile) {
     const response = await fetch(sceneFile);
     const sceneData = await response.json();
@@ -162,6 +170,12 @@ function updatePlayer() {
     }
 }
 
+function drawPlayButton() {
+    const buttonX = (canvas.width - currentButtonImage.width) / 2;
+    const buttonY = (canvas.height - currentButtonImage.height) / 2;
+    ctx.drawImage(currentButtonImage, buttonX, buttonY);
+}
+
 async function gameLoop() {
     await loadSceneAndUpdate(currentScene);
 
@@ -175,5 +189,43 @@ async function gameLoop() {
     loop();
 }
 
-// Démarrer le jeu
-gameLoop();
+function startGame() {
+    gameLoop();
+}
+
+function handleMouseMove(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const buttonX = (canvas.width - currentButtonImage.width) / 2;
+    const buttonY = (canvas.height - currentButtonImage.height) / 2;
+    if (x >= buttonX && x <= buttonX + currentButtonImage.width &&
+        y >= buttonY && y <= buttonY + currentButtonImage.height) {
+        currentButtonImage = playButtonGoldImage;
+    } else {
+        currentButtonImage = playButtonSilverImage;
+    }
+    drawPlayButton();
+}
+
+function handleMouseOut(event) {
+    currentButtonImage = playButtonSilverImage;
+    drawPlayButton();
+}
+
+playButtonSilverImage.onload = () => {
+    drawPlayButton();
+    canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const buttonX = (canvas.width - currentButtonImage.width) / 2;
+        const buttonY = (canvas.height - currentButtonImage.height) / 2;
+        if (x >= buttonX && x <= buttonX + currentButtonImage.width &&
+            y >= buttonY && y <= buttonY + currentButtonImage.height) {
+            startGame();
+        }
+    });
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseout', handleMouseOut);
+};
