@@ -19,7 +19,7 @@ const player = {
     state: 'idle' // Nouvel état pour gérer les animations
 };
 
-let currentScene = 'scene1.json';
+let currentScene = 'scene.json';
 let sceneData = {};
 let spriteSheet = new Image();
 spriteSheet.src = 'assets/lombric.png';
@@ -40,10 +40,26 @@ playButtonGoldImage.src = 'assets/play_gold.png';
 
 let currentButtonImage = playButtonSilverImage;
 
+const structureImages = {};
+
 async function loadScene(sceneFile) {
     const response = await fetch(sceneFile);
     const sceneData = await response.json();
     return sceneData;
+}
+
+function processResourcePath(resource) {
+    return resource.replace(/_/g, '/') + '.png';
+}
+
+async function loadStructureImages(structures) {
+    for (const structure of structures) {
+        const processedPath = processResourcePath(structure.resource);
+        if (!structureImages[processedPath]) {
+            structureImages[processedPath] = new Image();
+            structureImages[processedPath].src = processedPath;
+        }
+    }
 }
 
 function drawScene(scene) {
@@ -52,14 +68,13 @@ function drawScene(scene) {
         backgroundImage.src = scene.background;
         ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
     }
-    scene.elements.forEach(element => {
-        if (element.type === 'platform') {
-            drawScaledImage(platformImage, element.x, element.y, element.width, element.height);
-        } else if (element.type === 'teleporter') {
-            drawScaledImage(teleporterImage, element.x, element.y, element.width, element.height);
-        } else {
-            ctx.fillStyle = element.color;
-            ctx.fillRect(element.x, element.y, element.width, element.height);
+    scene.structures.forEach(structure => {
+        const processedPath = processResourcePath(structure.resource);
+        const image = structureImages[processedPath];
+        if (image && image.complete) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(image, structure.x * 16 * 3, structure.y * 16 * 3, 16 * 3, 16 * 3);
+            ctx.imageSmoothingEnabled = true;
         }
     });
     drawPlayer();
@@ -122,20 +137,20 @@ function drawPlayer() {
 }
 
 function checkCollisions(scene) {
-    scene.elements.forEach(element => {
-        if (element.type === 'teleporter' &&
-            player.x < element.x + element.width &&
-            player.x + player.width * 3 > element.x &&
-            player.y < element.y + element.height &&
-            player.y + player.height * 3 > element.y) {
-            currentScene = element.targetScene;
-            loadSceneAndUpdate(currentScene);
+    scene.structures.forEach(structure => {
+        if (structure.allow_pass_through === 0 &&
+            player.x < structure.x * 16 * 3 + 16 * 3 &&
+            player.x + player.width * 3 > structure.x * 16 * 3 &&
+            player.y < structure.y * 16 * 3 + 16 * 3 &&
+            player.y + player.height * 3 > structure.y * 16 * 3) {
+            // Collision handling will be added later
         }
     });
 }
 
 async function loadSceneAndUpdate(sceneFile) {
     sceneData = await loadScene(sceneFile);
+    await loadStructureImages(sceneData.structures);
     drawScene(sceneData);
     checkCollisions(sceneData);
 }
