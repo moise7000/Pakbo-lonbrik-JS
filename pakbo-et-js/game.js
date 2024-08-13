@@ -31,13 +31,11 @@ teleporterImage.src = 'assets/teleporter.png';
 
 let backgroundImage = new Image();
 
-
 async function loadScene(sceneFile) {
     const response = await fetch(sceneFile);
     const sceneData = await response.json();
     return sceneData;
 }
-
 
 function drawScene(scene) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -47,9 +45,9 @@ function drawScene(scene) {
     }
     scene.elements.forEach(element => {
         if (element.type === 'platform') {
-            ctx.drawImage(platformImage, element.x, element.y, element.width, element.height);
+            drawScaledImage(platformImage, element.x, element.y, element.width, element.height);
         } else if (element.type === 'teleporter') {
-            ctx.drawImage(teleporterImage, element.x, element.y, element.width, element.height);
+            drawScaledImage(teleporterImage, element.x, element.y, element.width, element.height);
         } else {
             ctx.fillStyle = element.color;
             ctx.fillRect(element.x, element.y, element.width, element.height);
@@ -58,12 +56,18 @@ function drawScene(scene) {
     drawPlayer();
 }
 
+function drawScaledImage(image, x, y, width, height) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, x, y, width, height);
+    ctx.imageSmoothingEnabled = true;
+}
 
 function drawPlayer() {
     const scale = 3;
     if (player.direction === 'left') {
         ctx.save();
         ctx.scale(-scale, scale);
+        ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
             spriteSheet,
             player.frameX * player.width,
@@ -75,8 +79,10 @@ function drawPlayer() {
             player.width,
             player.height
         );
+        ctx.imageSmoothingEnabled = true;
         ctx.restore();
     } else {
+        ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
             spriteSheet,
             player.frameX * player.width,
@@ -88,9 +94,9 @@ function drawPlayer() {
             player.width * scale,
             player.height * scale
         );
+        ctx.imageSmoothingEnabled = true;
     }
 }
-
 
 function checkCollisions(scene) {
     scene.elements.forEach(element => {
@@ -105,13 +111,11 @@ function checkCollisions(scene) {
     });
 }
 
-
 async function loadSceneAndUpdate(sceneFile) {
     sceneData = await loadScene(sceneFile);
     drawScene(sceneData);
     checkCollisions(sceneData);
 }
-
 
 const keys = {};
 document.addEventListener('keydown', (event) => {
@@ -121,7 +125,6 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
     keys[event.key] = false;
 });
-
 
 function updatePlayer() {
     if (keys['ArrowLeft']) {
@@ -159,10 +162,8 @@ function updatePlayer() {
     }
 }
 
-
 async function gameLoop() {
     await loadSceneAndUpdate(currentScene);
-
 
     function loop() {
         updatePlayer();
