@@ -15,13 +15,14 @@ const player = {
     frameX: 0,
     frameY: 0,
     frameCount: 0,
-    frameDelay: 5
+    frameDelay: 5,
+    state: 'idle' // Nouvel état pour gérer les animations
 };
 
 let currentScene = 'scene1.json';
 let sceneData = {};
 let spriteSheet = new Image();
-spriteSheet.src = 'assets/sprites.png';
+spriteSheet.src = 'assets/lombric.png';
 
 const platformImage = new Image();
 platformImage.src = 'assets/platform.png';
@@ -72,6 +73,20 @@ function drawScaledImage(image, x, y, width, height) {
 
 function drawPlayer() {
     const scale = 3;
+    let frameY = 0;
+    let frameCountMax = 7;
+
+    if (player.state === 'walk') {
+        frameY = 1;
+        frameCountMax = 8;
+    } else if (player.state === 'attack') {
+        frameY = 2;
+        frameCountMax = 4;
+    } else if (player.state === 'jump') {
+        frameY = 3;
+        frameCountMax = 1;
+    }
+
     if (player.direction === 'left') {
         ctx.save();
         ctx.scale(-scale, scale);
@@ -79,7 +94,7 @@ function drawPlayer() {
         ctx.drawImage(
             spriteSheet,
             player.frameX * player.width,
-            player.frameY * player.height,
+            frameY * player.height,
             player.width,
             player.height,
             -player.x / scale - player.width,
@@ -94,7 +109,7 @@ function drawPlayer() {
         ctx.drawImage(
             spriteSheet,
             player.frameX * player.width,
-            player.frameY * player.height,
+            frameY * player.height,
             player.width,
             player.height,
             player.x,
@@ -138,14 +153,20 @@ function updatePlayer() {
     if (keys['ArrowLeft']) {
         player.x -= player.speed;
         player.direction = 'left';
+        player.state = 'walk';
     }
     if (keys['ArrowRight']) {
         player.x += player.speed;
         player.direction = 'right';
+        player.state = 'walk';
     }
     if (keys['ArrowUp'] && !player.jumping) {
         player.jumping = true;
         player.velocityY = -10;
+        player.state = 'jump';
+    }
+    if (keys['x']) {
+        player.state = 'attack';
     }
 
     if (player.jumping) {
@@ -155,18 +176,26 @@ function updatePlayer() {
             player.y = canvas.height - player.height * 3;
             player.jumping = false;
             player.velocityY = 0;
+            player.state = 'idle';
         }
     }
 
     // Update animation frame
-    if (keys['ArrowLeft'] || keys['ArrowRight']) {
+    if (player.state === 'walk' || player.state === 'attack') {
+        player.frameCount++;
+        let frameCountMax = player.state === 'walk' ? 8 : 4;
+        if (player.frameCount >= player.frameDelay) {
+            player.frameCount = 0;
+            player.frameX = (player.frameX + 1) % frameCountMax;
+        }
+    } else if (player.state === 'jump') {
+        player.frameX = 0;
+    } else {
         player.frameCount++;
         if (player.frameCount >= player.frameDelay) {
             player.frameCount = 0;
-            player.frameX = (player.frameX + 1) % 4; // Assuming 4 frames per row
+            player.frameX = (player.frameX + 1) % 7;
         }
-    } else {
-        player.frameX = 0; // Reset to idle frame when not moving
     }
 }
 
