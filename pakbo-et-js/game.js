@@ -162,6 +162,9 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keyup', (event) => {
     keys[event.key] = false;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        player.state = 'idle';
+    }
 });
 
 function updatePlayer() {
